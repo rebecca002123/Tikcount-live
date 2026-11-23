@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "TokCount Live",
+    "slug": "tokcount-live",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.example.tokcountlive"
+    },
+    "android": {
+      "package": "com.example.tokcountlive",
+      "edgeToEdgeEnabled": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "REPLACE_WITH_YOUR_EAS_PROJECT_ID"
+      }
+    }
+  }
+}
