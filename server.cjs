@@ -38,17 +38,20 @@ http.createServer(async (req, res) => {
 
   try {
     const response = await fetch(
-      'https://api.igramapi.com/v1/tiktok/videos?url=' +
-      encodeURIComponent(id),
-      {
-        headers: {
-          Authorization: 'Bearer ' + process.env.IGRAM_API_KEY
-        },
-        signal: AbortSignal.timeout(30000)
-      }
-    );
-
-    if (!response.ok)
+  "https://api.fetchlayer.dev/tiktok/video-detail",
+  {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer " + process.env.FETCHLAYER_API_KEY,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      video: String(id),
+      include: ["exactStats"]
+    })
+  }
+);
+if (!response.ok)
       return send(response.status, {error: 'Provider request failed'});
 
     const raw = await response.json();
@@ -56,12 +59,12 @@ http.createServer(async (req, res) => {
 
     const data = {
       videoId: id,
-      views: v.plays,
-      likes: v.likes,
-      comments: v.comments,
-      shares: v.shares,
+      views: v.exactStats?.playCount,
+      likes: v.exactStats?.diggCount,
+      comments: v.exactStats?.commentCount,
+      shares: v.exactStats?.shareCount,
       title: v.description,
-      coverUrl: v.cover,
+      coverUrl: v.coverUrl,
       updatedAt: new Date().toISOString()
     };
 
