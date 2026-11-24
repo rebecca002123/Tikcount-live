@@ -24,7 +24,7 @@ http.createServer(async (req, res) => {
     return send(400, {error: 'Invalid video ID'});
 
   const saved = cache.get(id);
-  if (saved && Date.now() - saved.time < 1800000)
+  if (saved && Date.now() - saved.time < 60000)
     return send(200, saved.data);
 
   if (!process.env.IGRAM_API_KEY)
