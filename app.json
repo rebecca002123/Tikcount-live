@@ -5,19 +5,43 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.example.tokcountlive"
+      "bundleIdentifier": "com.stylebestieai.tokcountlive",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
-      "package": "com.example.tokcountlive",
-      "edgeToEdgeEnabled": true
+      "package": "com.example.tokcountlive"
     },
     "extra": {
       "eas": {
-        "projectId": "REPLACE_WITH_YOUR_EAS_PROJECT_ID"
+        "projectId": "6f0d01ab-75a4-4b1b-8260-403b74b7273e"
       }
-    }
+    },
+    "owner": "style-bestie-ai",
+    "plugins": [
+      "expo-status-bar",
+      [
+        "expo-widgets",
+        {
+          "widgets": [
+            {
+              "name": "TikCountWidget",
+              "displayName": "TikCount Live",
+              "description": "Track your exact TikTok views",
+              "ios": {
+                "supportedFamilies": [
+                  "systemSmall",
+                  "systemMedium"
+                ],
+                "initialLayout": "./TikCountWidget.tsx"
+              }
+            }
+          ]
+        }
+      ]
+    ]
   }
 }

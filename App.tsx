@@ -1,3 +1,45 @@
+import TikCountWidget from "./TikCountWidget";
+import * as Notifications from "expo-notifications";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
+let milestoneQueue = Promise.resolve();
+
+function checkMilestone(id: string, views: number) {
+  milestoneQueue = milestoneQueue.then(async () => {
+    const key = "milestone:" + id;
+    const saved = await AsyncStorage.getItem(key);
+    const current = Math.floor(views / 500000);
+    if (saved === null) {
+      await AsyncStorage.setItem(key, String(current));
+      return;
+    }
+    if (current > Number(saved)) {
+      const permission = await Notifications.getPermissionsAsync();
+      if (!permission.granted) return;
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "🎉 " + (current * 0.5) + "M views!",
+          body: "Your TikTok video has reached " +
+            (current * 500000).toLocaleString("en-GB") +
+            " views!",
+          sound: true,
+        },
+        trigger: null,
+      });
+      await AsyncStorage.setItem(key, String(current));
+    }
+  }).catch(console.warn);
+}
+
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator, Alert, Keyboard, Pressable, SafeAreaView, ScrollView,
@@ -26,6 +68,9 @@ function StatCard({ label, value, glyph }: { label: string; value: number; glyph
 }
 
 export default function App() {
+  useEffect(() => {
+    Notifications.requestPermissionsAsync().catch(console.warn);
+  }, []);
   const [url, setUrl] = useState(`https://www.tiktok.com/@creator/video/${DEFAULT_ID}`);
   const [videoId, setVideoId] = useState(DEFAULT_ID);
   const [stats, setStats] = useState<VideoStats | null>(null);
@@ -42,19 +87,36 @@ export default function App() {
     try {
       setLoading(true);
       const next = await fetchVideoStats(id);
+      checkMilestone(id, next.views);
       setStats(next);
+
+      try {
+        TikCountWidget.updateSnapshot({
+          views: Number(next.views).toLocaleString("en-GB"),
+          likes: Number(next.likes).toLocaleString("en-GB"),
+          updated: new Date().toLocaleTimeString("en-GB")
+        });
+      } catch (widgetError) {
+        console.log("Widget update:", widgetError);
+      }
       setConnected(true);
       setDemo(false);
       setError("");
       setLastUpdated(new Date());
-      setPreviousViews(current => {
-        if (current !== null && next.views >= current) {
-          const delta = next.views - current;
-          setRate(delta / (REFRESH_MS / 1000));
-        }
-        return next.views;
-      });
-      baseline.current = { views: next.views, at: Date.now() };
+      const parsedTime = Date.parse(next.updatedAt ?? "");
+      const timestamp = Number.isFinite(parsedTime) ? parsedTime : Date.now();
+      const previous = baseline.current;
+
+      if (!previous) {
+        baseline.current = { views: next.views, at: timestamp };
+      } else if (timestamp > previous.at && (Number.isFinite(parsedTime) || next.views !== previous.views)) {
+        const seconds = (timestamp - previous.at) / 1000;
+        const delta = Math.max(0, next.views - previous.views);
+        setRate(delta / seconds);
+        baseline.current = { views: next.views, at: timestamp };
+      }
+
+      setPreviousViews(next.views);
     } catch (e) {
       setConnected(false);
       setError(e instanceof Error ? e.message : "Unable to load video statistics.");
@@ -91,6 +153,10 @@ export default function App() {
       return;
     }
     Keyboard.dismiss();
+    if (id === videoId) {
+      load(id);
+      return;
+    }
     setVideoId(id);
     setStats(null);
     setPreviousViews(null);
@@ -114,7 +180,7 @@ export default function App() {
   };
 
   const growthPerMinute = rate * 60;
-  const milestones = [1500000, 2000000, 5000000, 10000000];
+  const milestones = [(Math.floor((stats?.views ?? 0) / 500000) + 1) * 500000];
   const nextMilestone = milestones.find(m => m > (stats?.views ?? 0)) ?? 10000000;
   const progress = Math.min(((stats?.views ?? 0) / nextMilestone) * 100, 100);
 
