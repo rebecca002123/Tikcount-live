@@ -27,7 +27,7 @@ http.createServer(async (req, res) => {
   if (saved && Date.now() - saved.time < 60000)
     return send(200, saved.data);
 
-  if (!process.env.IGRAM_API_KEY)
+  if (!process.env.FETCHLAYER_API_KEY)
     return send(503, {error: 'API key missing'});
 
   if (busy || Date.now() - lastRequest < 60000)
