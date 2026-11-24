@@ -92,6 +92,8 @@ export default function App() {
 
       try {
         TikCountWidget.updateSnapshot({
+          comments: next.comments.toLocaleString('en-GB'),
+          shares: next.shares.toLocaleString('en-GB'),
           videoId: String(id),
           views: Number(next.views).toLocaleString("en-GB"),
           likes: Number(next.likes).toLocaleString("en-GB"),
