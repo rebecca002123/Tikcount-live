@@ -1,0 +1,65 @@
+diff --git a/node_modules/expo-widgets/ios/Widgets/TimelineProvider.swift b/node_modules/expo-widgets/ios/Widgets/TimelineProvider.swift
+index f339d98..821a8b0 100644
+--- a/node_modules/expo-widgets/ios/Widgets/TimelineProvider.swift
++++ b/node_modules/expo-widgets/ios/Widgets/TimelineProvider.swift
+@@ -1,3 +1,4 @@
++import Foundation
+ import WidgetKit
+ 
+ public struct WidgetsTimelineProvider: TimelineProvider {
+@@ -31,8 +32,53 @@ public struct WidgetsTimelineProvider: TimelineProvider {
+ 
+     let entries = parseTimeline(identifier: groupIdentifier, name: name, family: context.family)
+ 
+-    let timeline = Timeline<WidgetsTimelineEntry>(entries: entries, policy: .atEnd)
+-    completion(timeline)
++    guard name == "TikCountWidget",
++          let previous = entries.last,
++          let videoId = previous.props?["videoId"] as? String,
++          !videoId.isEmpty,
++          videoId.allSatisfy({ $0.isNumber }),
++          let url = URL(string: "https://tikcount-live.onrender.com/video-stats?videoId=" + videoId)
++    else {
++      completion(Timeline(entries: entries, policy: .atEnd))
++      return
++    }
++
++    let request = URLRequest(url: url, timeoutInterval: 25)
++
++    URLSession.shared.dataTask(with: request) { data, response, error in
++      var props = previous.props ?? [:]
++
++      if error == nil,
++         let http = response as? HTTPURLResponse,
++         http.statusCode == 200,
++         let data = data,
++         let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
++         let views = json["views"] as? NSNumber,
++         let likes = json["likes"] as? NSNumber {
++
++        let formatter = NumberFormatter()
++        formatter.numberStyle = .decimal
++        formatter.locale = Locale(identifier: "en_GB")
++
++        props["views"] = formatter.string(from: views)
++        props["likes"] = formatter.string(from: likes)
++        props["updated"] = DateFormatter.localizedString(
++          from: Date(), dateStyle: .none, timeStyle: .short
++        )
++      }
++
++      let entry = WidgetsTimelineEntry(
++        date: Date(),
++        name: "TikCountWidget",
++        props: props,
++        entryIndex: nil
++      )
++
++      completion(Timeline(
++        entries: [entry],
++        policy: .after(Date().addingTimeInterval(900))
++      ))
++    }.resume()
+   }
+ 
+   public typealias Entry = WidgetsTimelineEntry

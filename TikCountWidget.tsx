@@ -3,6 +3,7 @@ import { containerBackground, font } from '@expo/ui/swift-ui/modifiers';
 import { createWidget } from 'expo-widgets';
 
 type Props = {
+  videoId?: string;
   views: string;
   likes: string;
   updated: string;
@@ -24,6 +25,7 @@ const TikCountWidget = (props: Props) => {
 };
 
 export default createWidget('TikCountWidget', TikCountWidget, {
+  videoId: '',
   views: '—',
   likes: '—',
   updated: 'Open TikCount Live'
