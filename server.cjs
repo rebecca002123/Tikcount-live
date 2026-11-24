@@ -24,13 +24,13 @@ http.createServer(async (req, res) => {
     return send(400, {error: 'Invalid video ID'});
 
   const saved = cache.get(id);
-  if (saved && Date.now() - saved.time < 60000)
+  if (saved && Date.now() - saved.time < 5000)
     return send(200, saved.data);
 
   if (!process.env.FETCHLAYER_API_KEY)
     return send(503, {error: 'API key missing'});
 
-  if (busy || Date.now() - lastRequest < 60000)
+  if (busy || Date.now() - lastRequest < 5000)
     return send(429, {error: 'Please wait'});
 
   busy = true;
